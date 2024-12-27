@@ -4,7 +4,7 @@ import 'auth.dart';
 import 'firestore.dart';
 
 class HomePage extends StatefulWidget {
-  const HomePage(this.phoneNumber, {super.key});
+  const HomePage({required this.phoneNumber, super.key});
   final String phoneNumber;
 
   @override
@@ -150,7 +150,7 @@ class _HomePageState extends State<HomePage> {
               builder: (context, snapshot) {
                 if (snapshot.hasData) {
                   return Column(
-                    children: snapshot.data
+                    children: snapshot.data!
                         .map<Widget>(
                           (party) => Party(
                             partyName: party["Name"],
@@ -262,16 +262,10 @@ class Party extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Padding(
-                padding: EdgeInsets.all(12),
-                child: Image(
-                  image: AssetImage('lib/images/voting.png'),
-                  height: 40,
-                ),
-              ),
               Text(
                 partyName,
-                style: const TextStyle(fontWeight: FontWeight.w500),
+                style:
+                    const TextStyle(fontSize: 24, fontWeight: FontWeight.w500),
               ),
               ElevatedButton(
                   onPressed: voted
@@ -302,192 +296,121 @@ class _ChartState extends State<Chart> {
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder(
+    return FutureBuilder<List<Map<String, dynamic>>>(
       future: getParties(),
       builder: (context, snapshot) {
-        if (snapshot.hasData) {
-          List votes = [];
-          for (final map_ in snapshot.data) {
-            votes.add(map_['Votes']);
-          }
-          List votesPercent = votes
-              .map((e) => (e / votes.reduce((a, b) => a + b) * 100))
-              .toList();
-          print(votesPercent);
-
-          return Card(
-            elevation: 0,
-            color: Colors.blue[100],
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                children: [
-                  Text(
-                    'Votes',
-                    style: TextStyle(
-                        fontSize: 30,
-                        color: Theme.of(context).primaryColor,
-                        fontWeight: FontWeight.bold),
-                  ),
-                  AspectRatio(
-                    aspectRatio: 1,
-                    child: PieChart(
-                      PieChartData(
-                          pieTouchData: PieTouchData(
-                            touchCallback:
-                                (FlTouchEvent event, pieTouchResponse) {
-                              setState(() {
-                                if (!event.isInterestedForInteractions ||
-                                    pieTouchResponse == null ||
-                                    pieTouchResponse.touchedSection == null) {
-                                  touchedIndex = -1;
-                                  return;
-                                }
-                                touchedIndex = pieTouchResponse
-                                    .touchedSection!.touchedSectionIndex;
-                              });
-                            },
-                          ),
-                          borderData: FlBorderData(
-                            show: false,
-                          ),
-                          sectionsSpace: 0,
-                          centerSpaceRadius: 80,
-                          sections: showingSections(votes, votesPercent)),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.all(10),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: <Widget>[
-                        Indicator(
-                          color: const Color(0xff0293ee),
-                          text: snapshot.data[0]['Name'],
-                          isSquare: true,
-                        ),
-                        const SizedBox(
-                          height: 4,
-                        ),
-                        Indicator(
-                          color: const Color(0xfff8b250),
-                          text: snapshot.data[1]['Name'],
-                          isSquare: true,
-                        ),
-                        const SizedBox(
-                          height: 4,
-                        ),
-                        Indicator(
-                          color: const Color(0xff845bef),
-                          text: snapshot.data[2]['Name'],
-                          isSquare: true,
-                        ),
-                        const SizedBox(
-                          height: 4,
-                        ),
-                        Indicator(
-                          color: const Color(0xff13d38e),
-                          text: snapshot.data[3]['Name'],
-                          isSquare: true,
-                        ),
-                        const SizedBox(
-                          height: 4,
-                        ),
-                        Indicator(
-                          color: const Color(0xfff5387a),
-                          text: snapshot.data[4]['Name'],
-                          isSquare: true,
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
         }
-        return const CircularProgressIndicator();
+        if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty) {
+          return const Center(child: Text('No data available.'));
+        }
+
+        final List<Map<String, dynamic>> parties = snapshot.data!;
+        final List<int> votes =
+            parties.map((party) => party['Votes'] as int).toList();
+        final int totalVotes =
+            votes.isNotEmpty ? votes.reduce((a, b) => a + b) : 0;
+        final List<double> votesPercent = totalVotes > 0
+            ? votes.map((e) => (e / totalVotes) * 100).toList()
+            : List.filled(votes.length, 0.0);
+        final List<Color> sectionColors = [
+          const Color(0xff0293ee),
+          const Color(0xfff8b250),
+          const Color(0xff845bef),
+          const Color(0xff13d38e),
+          const Color(0xfff5387a),
+        ];
+
+        return Card(
+          elevation: 0,
+          color: Colors.blue[100],
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              children: [
+                Text(
+                  'Votes',
+                  style: TextStyle(
+                    fontSize: 30,
+                    color: Theme.of(context).primaryColor,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                AspectRatio(
+                  aspectRatio: 1,
+                  child: PieChart(
+                    PieChartData(
+                      pieTouchData: PieTouchData(
+                        touchCallback: (FlTouchEvent event, pieTouchResponse) {
+                          setState(() {
+                            if (!event.isInterestedForInteractions ||
+                                pieTouchResponse == null ||
+                                pieTouchResponse.touchedSection == null) {
+                              touchedIndex = -1;
+                              return;
+                            }
+                            touchedIndex = pieTouchResponse
+                                .touchedSection!.touchedSectionIndex;
+                          });
+                        },
+                      ),
+                      borderData: FlBorderData(show: false),
+                      sectionsSpace: 0,
+                      centerSpaceRadius: 80,
+                      sections:
+                          showingSections(votes, votesPercent, sectionColors),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: parties.asMap().entries.map((entry) {
+                    final index = entry.key;
+                    final party = entry.value;
+                    return Indicator(
+                      color: sectionColors[index % sectionColors.length],
+                      text: party['Name'],
+                      isSquare: true,
+                    );
+                  }).toList(),
+                ),
+              ],
+            ),
+          ),
+        );
       },
     );
   }
 
-  List<PieChartSectionData> showingSections(votes, votesPercent) {
-    return List.generate(5, (i) {
-      final isTouched = i == touchedIndex;
-      final fontSize = isTouched ? 20.0 : 10.0;
-      final radius = isTouched ? 90.0 : 50.0;
-      switch (i) {
-        case 0:
-          return PieChartSectionData(
-            color: const Color(0xff0293ee),
-            value: votesPercent[i],
-            title:
-                '${votesPercent[i].toStringAsFixed(2)}%\n${votes[i]} vote(s)',
-            radius: radius,
-            titleStyle: TextStyle(
-              fontSize: fontSize,
-              fontWeight: FontWeight.bold,
-              color: const Color(0xffffffff),
-            ),
-          );
-        case 1:
-          return PieChartSectionData(
-            color: const Color(0xfff8b250),
-            value: votesPercent[i],
-            title:
-                '${votesPercent[i].toStringAsFixed(2)}%\n${votes[i]} vote(s)',
-            radius: radius,
-            titleStyle: TextStyle(
-              fontSize: fontSize,
-              fontWeight: FontWeight.bold,
-              color: const Color(0xffffffff),
-            ),
-          );
-        case 2:
-          return PieChartSectionData(
-            color: const Color(0xff845bef),
-            value: votesPercent[i],
-            title:
-                '${votesPercent[i].toStringAsFixed(2)}%\n${votes[i]} vote(s)',
-            radius: radius,
-            titleStyle: TextStyle(
-              fontSize: fontSize,
-              fontWeight: FontWeight.bold,
-              color: const Color(0xffffffff),
-            ),
-          );
-        case 3:
-          return PieChartSectionData(
-            color: const Color(0xff13d38e),
-            value: votesPercent[i],
-            title:
-                '${votesPercent[i].toStringAsFixed(2)}%\n${votes[i]} vote(s)',
-            radius: radius,
-            titleStyle: TextStyle(
-              fontSize: fontSize,
-              fontWeight: FontWeight.bold,
-              color: const Color(0xffffffff),
-            ),
-          );
-        case 4:
-          return PieChartSectionData(
-            color: const Color(0xfff5387a),
-            value: votesPercent[i],
-            title:
-                '${votesPercent[i].toStringAsFixed(2)}%\n${votes[i]} vote(s)',
-            radius: radius,
-            titleStyle: TextStyle(
-              fontSize: fontSize,
-              fontWeight: FontWeight.bold,
-              color: const Color(0xffffffff),
-            ),
-          );
-        default:
-          throw Error();
-      }
+  List<PieChartSectionData> showingSections(
+    List<int> votes,
+    List<double> votesPercent,
+    List<Color> sectionColors,
+  ) {
+    if (votes.isEmpty) {
+      return [];
+    }
+    return List.generate(votes.length, (index) {
+      final isTouched = index == touchedIndex;
+      final double radius = isTouched ? 60.0 : 50.0;
+
+      return PieChartSectionData(
+        color: sectionColors[index % sectionColors.length],
+        value: votesPercent[index],
+        title: votesPercent[index] > 0
+            ? '${votesPercent[index].toStringAsFixed(1)}%'
+            : '',
+        radius: radius,
+        titleStyle: const TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.bold,
+          color: Colors.white,
+        ),
+      );
     });
   }
 }

@@ -1,43 +1,61 @@
+import 'package:e_voting_app/home_page.dart';
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'otp_validation.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+// For hashing (optional)
+
 import 'login_page.dart';
 
-FirebaseAuth auth = FirebaseAuth.instance;
+final FirebaseFirestore firestore = FirebaseFirestore.instance;
 
-void verify(BuildContext context, String phoneNumber) async {
-  await auth.verifyPhoneNumber(
-    phoneNumber: '+91 $phoneNumber',
-    verificationCompleted: (PhoneAuthCredential credential) async {
-      // ANDROID ONLY!
+void signIn(BuildContext context, String phone, String password) async {
+  try {
+    // Hash the password for matching (if stored as hash in Firestore)
 
-      // Sign the user in (or link) with the auto-generated credential
-      await auth.signInWithCredential(credential);
-    },
-    verificationFailed: (FirebaseAuthException e) {
-      if (e.code == 'invalid-phone-number') {
-        print('The provided phone number is not valid.');
-      }
+    // Query Firestore for user with matching email and password
+    QuerySnapshot userSnapshot = await firestore
+        .collection('Users')
+        .where('PhoneNumber', isEqualTo: phone)
+        .where('password', isEqualTo: password)
+        .get();
 
-      // Handle other errors
-    },
-    codeSent: (String verificationId, int? resendToken) async {
-      Navigator.push(
+    if (userSnapshot.docs.isNotEmpty) {
+      // User exists, navigate to the home page
+      Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (context) =>
-              OtpValidation(phoneNumber, verificationId, resendToken),
-        ),
+            builder: (context) =>
+                HomePage(phoneNumber: phone)), // Replace with your home page
       );
-    },
-    codeAutoRetrievalTimeout: (String verificationId) {
-      // Auto-resolution timed out...
-    },
+    } else {
+      // Show error if no matching user found
+      _showErrorDialog(context, 'Invalid email or password.');
+    }
+  } catch (e) {
+    _showErrorDialog(context, 'An error occurred: $e');
+  }
+}
+
+void _showErrorDialog(BuildContext context, String message) {
+  showDialog(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: const Text('Error'),
+      content: Text(message),
+      actions: [
+        TextButton(
+          onPressed: () {
+            Navigator.of(ctx).pop();
+          },
+          child: const Text('OK'),
+        ),
+      ],
+    ),
   );
 }
 
-void signOut(context) async {
-  await FirebaseAuth.instance.signOut();
+void signOut(BuildContext context) {
   Navigator.pushReplacement(
-      context, MaterialPageRoute(builder: (context) => const LoginPage()));
+    context,
+    MaterialPageRoute(builder: (context) => const LoginPage()),
+  );
 }

@@ -1,8 +1,7 @@
-import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
-import 'registration_page.dart';
+import 'package:flutter/material.dart';
 import 'auth.dart';
-import 'firestore.dart';
+import 'registration_page.dart';
 
 class LoginPage extends StatelessWidget {
   const LoginPage({super.key});
@@ -42,11 +41,8 @@ class LoginForm extends StatefulWidget {
 
 class _LoginFormState extends State<LoginForm> {
   final _formKey = GlobalKey<FormState>();
-  TextStyle defaultStyle = const TextStyle(color: Colors.grey, fontSize: 20.0);
-  TextStyle linkStyle = const TextStyle(color: Colors.blue);
-
-  TextEditingController phoneController = TextEditingController();
-  bool userExists = false;
+  TextEditingController emailController = TextEditingController();
+  TextEditingController passwordController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -55,58 +51,56 @@ class _LoginFormState extends State<LoginForm> {
       child: Column(
         children: [
           TextFormField(
-            controller: phoneController,
+            controller: emailController,
             decoration: const InputDecoration(
               border: OutlineInputBorder(),
-              hintText: 'Enter your mobile number',
+              hintText: 'Enter your phone number',
             ),
-            onChanged: (text) async {
-              await getUser(phoneController.text).then(
-                (data) {
-                  if (data != null) {
-                    setState(() => userExists = true);
-                  } else {
-                    setState(() => userExists = false);
-                  }
-                },
-              );
-            },
             validator: (value) {
               if (value == null || value.length != 10) {
-                return 'Please enter valid mobile number';
-              } else if (!userExists) {
-                return 'User does not exist. Please register';
+                return 'Please enter a valid mobile number';
               }
               return null;
             },
           ),
-          const SizedBox(
-            height: 20,
+          const SizedBox(height: 20),
+          TextFormField(
+            controller: passwordController,
+            obscureText: true,
+            decoration: const InputDecoration(
+              border: OutlineInputBorder(),
+              hintText: 'Enter your password',
+            ),
+            validator: (value) {
+              if (value == null || value.length < 6) {
+                return 'Password must be at least 6 characters';
+              }
+              return null;
+            },
           ),
+          const SizedBox(height: 20),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
               minimumSize: const Size.fromHeight(50),
             ),
             onPressed: () {
               if (_formKey.currentState!.validate()) {
-                verify(context, phoneController.text);
+                signIn(context, emailController.text, passwordController.text);
               }
             },
             child: const Text(
-              'Generate OTP',
+              'Login',
               style: TextStyle(fontSize: 20),
             ),
           ),
-          const SizedBox(
-            height: 20,
-          ),
+          const SizedBox(height: 20),
           RichText(
             text: TextSpan(
-              style: defaultStyle,
-              text: 'New voter? Register ',
+              style: const TextStyle(color: Colors.grey, fontSize: 20.0),
+              text: 'New user? Register ',
               children: <TextSpan>[
                 TextSpan(
-                  style: linkStyle,
+                  style: const TextStyle(color: Colors.blue),
                   text: 'here',
                   recognizer: TapGestureRecognizer()
                     ..onTap = () {

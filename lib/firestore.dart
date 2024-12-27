@@ -1,10 +1,13 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-Future addUser(name, phoneNumber) async {
+Future addUser(name, phoneNumber, password) async {
   final dbCollection = FirebaseFirestore.instance.collection('Users');
-  await dbCollection
-      .doc(phoneNumber)
-      .set({'FullName': name, 'PhoneNumber': phoneNumber, 'Voted': false});
+  await dbCollection.doc(phoneNumber).set({
+    'FullName': name,
+    'PhoneNumber': phoneNumber,
+    'password': password,
+    'Voted': false
+  });
 }
 
 Future getUser(phoneNumber) async {
@@ -22,23 +25,20 @@ Future getUser(phoneNumber) async {
   return data;
 }
 
-Future getParties() async {
-  final collRef = FirebaseFirestore.instance.collection('Parties');
-  List<Map<String, dynamic>?> parties = [];
-  Map<String, dynamic>? data;
-  int size = await collRef.get().then((value) => value.size);
-  for (var i = 1; i <= size; i++) {
-    final docRef = collRef.doc(i.toString());
-    await docRef.get().then(
-      (DocumentSnapshot doc) {
-        if (!doc.exists) return null;
-        data = doc.data() as Map<String, dynamic>;
-        parties.add(data);
-      },
-      onError: (e) => print('Error: $e'),
-    );
+Future<List<Map<String, dynamic>>> getParties() async {
+  try {
+    final collRef = FirebaseFirestore.instance.collection('Parties');
+    final querySnapshot = await collRef.get();
+    print(querySnapshot.docs
+        .map((doc) => doc.data() as Map<String, dynamic>)
+        .toList());
+    return querySnapshot.docs
+        .map((doc) => doc.data() as Map<String, dynamic>)
+        .toList();
+  } catch (e) {
+    print('Error fetching parties: $e');
+    return [];
   }
-  return parties;
 }
 
 Future incrementVotes(

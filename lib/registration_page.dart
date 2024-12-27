@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'login_page.dart';
-import 'auth.dart';
-import 'firestore.dart';
+import 'firestore.dart'; // Import Firestore interaction functions
 
 class RegistrationPage extends StatelessWidget {
   const RegistrationPage({super.key});
@@ -49,6 +48,7 @@ class _RegistrationFormState extends State<RegistrationForm> {
 
   TextEditingController nameController = TextEditingController();
   TextEditingController phoneController = TextEditingController();
+  TextEditingController passwordController = TextEditingController();
 
   bool userExists = false;
 
@@ -91,8 +91,36 @@ class _RegistrationFormState extends State<RegistrationForm> {
             },
             validator: (value) {
               if (value == null || value.length != 10) {
-                return 'Please enter valid mobile number';
+                return 'Please enter a valid mobile number';
               } else if (userExists) {
+                return 'User with this phone number already exists';
+              }
+              return null;
+            },
+          ),
+          const SizedBox(
+            height: 20,
+          ),
+          TextFormField(
+            controller: passwordController,
+            decoration: const InputDecoration(
+              border: OutlineInputBorder(),
+              hintText: 'password',
+            ),
+            onChanged: (text) async {
+              await getUser(phoneController.text).then((data) {
+                if (data != null) {
+                  setState(() => userExists = true);
+                } else {
+                  setState(() => userExists = false);
+                }
+              });
+            },
+            validator: (value) {
+               if (value == null || value.length < 6) {
+                return 'Password must be at least 6 characters';
+              }
+              else if (userExists) {
                 return 'User with this phone number already exists';
               }
               return null;
@@ -107,8 +135,13 @@ class _RegistrationFormState extends State<RegistrationForm> {
             ),
             onPressed: () {
               if (_formKey.currentState!.validate()) {
-                addUser(nameController.text, phoneController.text);
-                verify(context, phoneController.text);
+                addUser(nameController.text, phoneController.text,passwordController.text);
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const LoginPage(),
+                  ),
+                );
               }
             },
             child: const Text(
@@ -122,7 +155,7 @@ class _RegistrationFormState extends State<RegistrationForm> {
           RichText(
             text: TextSpan(
               style: defaultStyle,
-              text: 'Returning voter? Login ',
+              text: 'Returning user? Login ',
               children: <TextSpan>[
                 TextSpan(
                   style: linkStyle,
