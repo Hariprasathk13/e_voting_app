@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "939165949757",
-    "project_id": "e-voting-app-808d5",
-    "storage_bucket": "e-voting-app-808d5.firebasestorage.app"
+    "project_number": "616138192390",
+    "project_id": "electohub-bca",
+    "storage_bucket": "electohub-bca.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:939165949757:android:deff2b7cfa45ece7106f54",
+        "mobilesdk_app_id": "1:616138192390:android:43e0c47dd5be2fe3e27587",
         "android_client_info": {
           "package_name": "com.example.e_voting_app"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyDCxIEO--wJGDUhlwKztVvi9F_JF_HCHzA"
+          "current_key": "AIzaSyCvQEkclughEtTsZ7r9rmobV5ByABHbM0o"
         }
       ],
       "services": {

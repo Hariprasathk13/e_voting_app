@@ -23,20 +23,11 @@ class DefaultFirebaseOptions {
       case TargetPlatform.android:
         return android;
       case TargetPlatform.iOS:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for ios - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return ios;
       case TargetPlatform.macOS:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for macos - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return macos;
       case TargetPlatform.windows:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for windows - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return windows;
       case TargetPlatform.linux:
         throw UnsupportedError(
           'DefaultFirebaseOptions have not been configured for linux - '
@@ -50,20 +41,49 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyBiCwo9pljncZW21GOt_PfPFSdi8j8PITM',
-    appId: '1:939165949757:web:4f0154c4f230a190106f54',
-    messagingSenderId: '939165949757',
-    projectId: 'e-voting-app-808d5',
-    authDomain: 'e-voting-app-808d5.firebaseapp.com',
-    storageBucket: 'e-voting-app-808d5.firebasestorage.app',
-    measurementId: 'G-3X3NMDWGF5',
+    apiKey: 'AIzaSyAl3QWJHuy-JNYAESKIRcrOX2zpyV5ksyo',
+    appId: '1:616138192390:web:b6cc253ecd25c32fe27587',
+    messagingSenderId: '616138192390',
+    projectId: 'electohub-bca',
+    authDomain: 'electohub-bca.firebaseapp.com',
+    storageBucket: 'electohub-bca.firebasestorage.app',
+    measurementId: 'G-N79D60FZNS',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyDCxIEO--wJGDUhlwKztVvi9F_JF_HCHzA',
-    appId: '1:939165949757:android:deff2b7cfa45ece7106f54',
-    messagingSenderId: '939165949757',
-    projectId: 'e-voting-app-808d5',
-    storageBucket: 'e-voting-app-808d5.firebasestorage.app',
+    apiKey: 'AIzaSyCvQEkclughEtTsZ7r9rmobV5ByABHbM0o',
+    appId: '1:616138192390:android:43e0c47dd5be2fe3e27587',
+    messagingSenderId: '616138192390',
+    projectId: 'electohub-bca',
+    storageBucket: 'electohub-bca.firebasestorage.app',
   );
+
+  static const FirebaseOptions macos = FirebaseOptions(
+    apiKey: 'AIzaSyCZCTZy04mvAltYt-8AC5d4y_gGnSsPfAI',
+    appId: '1:616138192390:ios:557a0fdf17cc7a46e27587',
+    messagingSenderId: '616138192390',
+    projectId: 'electohub-bca',
+    storageBucket: 'electohub-bca.firebasestorage.app',
+    iosBundleId: 'com.example.eVotingApp',
+  );
+
+  static const FirebaseOptions ios = FirebaseOptions(
+    apiKey: 'AIzaSyCZCTZy04mvAltYt-8AC5d4y_gGnSsPfAI',
+    appId: '1:616138192390:ios:557a0fdf17cc7a46e27587',
+    messagingSenderId: '616138192390',
+    projectId: 'electohub-bca',
+    storageBucket: 'electohub-bca.firebasestorage.app',
+    iosBundleId: 'com.example.eVotingApp',
+  );
+
+  static const FirebaseOptions windows = FirebaseOptions(
+    apiKey: 'AIzaSyAl3QWJHuy-JNYAESKIRcrOX2zpyV5ksyo',
+    appId: '1:616138192390:web:bed9316e3ce41d54e27587',
+    messagingSenderId: '616138192390',
+    projectId: 'electohub-bca',
+    authDomain: 'electohub-bca.firebaseapp.com',
+    storageBucket: 'electohub-bca.firebasestorage.app',
+    measurementId: 'G-42Q7LXJ3KR',
+  );
+
 }
