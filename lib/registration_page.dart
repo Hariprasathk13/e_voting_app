@@ -10,24 +10,72 @@ class RegistrationPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       resizeToAvoidBottomInset: false,
-      appBar: AppBar(
-        title: const Center(child: Text('Register')),
-      ),
-      body: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: const [
-          Text(
-            'Register',
-            style: TextStyle(
-              fontSize: 30,
+      backgroundColor: const Color(0xFFF5F5F5),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 10),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            SizedBox(
+              height: 160,
             ),
-          ),
-          Padding(
-            padding: EdgeInsets.all(24),
-            child: RegistrationForm(),
-          )
-        ],
+            Row(
+              children: [
+                Image.asset(
+                  "lib/images/images (19).png",
+                  width: 60,
+                  height: 60,
+                ),
+                Column(
+                  children: [
+                    Text(
+                      "Fatima College, Madurai",
+                      style:
+                          TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    ),
+                    SizedBox(
+                      height: 5,
+                    ),
+                    Text(
+                      "Department of Computer Applications",
+                      style:
+                          TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+                      textAlign: TextAlign.center,
+                    )
+                  ],
+                ),
+                Image.asset(
+                  "lib/images/logo2.jpg",
+                  width: 60,
+                  height: 60,
+                ),
+              ],
+            ),
+            SizedBox(
+              height: 60,
+            ),
+            Text(
+              'Create an Account',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 26,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF1E40AF),
+              ),
+            ),
+            SizedBox(height: 8),
+            Text(
+              'Fill in the details to get started',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 16,
+                color: Colors.grey,
+              ),
+            ),
+            SizedBox(height: 32),
+            RegistrationForm(),
+          ],
+        ),
       ),
     );
   }
@@ -43,9 +91,6 @@ class RegistrationForm extends StatefulWidget {
 class _RegistrationFormState extends State<RegistrationForm> {
   final _formKey = GlobalKey<FormState>();
 
-  TextStyle defaultStyle = const TextStyle(color: Colors.grey, fontSize: 20.0);
-  TextStyle linkStyle = const TextStyle(color: Colors.blue);
-
   TextEditingController nameController = TextEditingController();
   TextEditingController phoneController = TextEditingController();
   TextEditingController passwordController = TextEditingController();
@@ -60,9 +105,14 @@ class _RegistrationFormState extends State<RegistrationForm> {
         children: [
           TextFormField(
             controller: nameController,
-            decoration: const InputDecoration(
-              border: OutlineInputBorder(),
-              hintText: 'Full Name',
+            decoration: InputDecoration(
+              labelText: 'Full Name',
+              hintText: 'Enter your full name',
+              labelStyle: const TextStyle(color: Colors.black87, fontSize: 14),
+              hintStyle: const TextStyle(color: Colors.grey),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
             validator: (value) {
               if (value == null || value.isEmpty) {
@@ -71,14 +121,17 @@ class _RegistrationFormState extends State<RegistrationForm> {
               return null;
             },
           ),
-          const SizedBox(
-            height: 20,
-          ),
+          const SizedBox(height: 20),
           TextFormField(
             controller: phoneController,
-            decoration: const InputDecoration(
-              border: OutlineInputBorder(),
-              hintText: 'Mobile number',
+            decoration: InputDecoration(
+              labelText: 'Register Number',
+              hintText: 'Enter your register number',
+              labelStyle: const TextStyle(color: Colors.black87, fontSize: 14),
+              hintStyle: const TextStyle(color: Colors.grey),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
             onChanged: (text) async {
               await getUser(phoneController.text).then((data) {
@@ -90,52 +143,53 @@ class _RegistrationFormState extends State<RegistrationForm> {
               });
             },
             validator: (value) {
-              if (value == null || value.length != 10) {
-                return 'Please enter a valid mobile number';
+              if (value == null ||
+                  value.length < 8 ||
+                  !value.contains("2022") ||
+                  !value.contains("BCA")) {
+                return 'Please enter a valid register number';
               } else if (userExists) {
-                return 'User with this phone number already exists';
+                return 'User with this register number already exists';
               }
               return null;
             },
           ),
-          const SizedBox(
-            height: 20,
-          ),
+          const SizedBox(height: 20),
           TextFormField(
             controller: passwordController,
-            decoration: const InputDecoration(
-              border: OutlineInputBorder(),
-              hintText: 'password',
+            obscureText: true,
+            decoration: InputDecoration(
+              labelText: 'Password',
+              hintText: 'Enter your password',
+              labelStyle: const TextStyle(color: Colors.black87, fontSize: 14),
+              hintStyle: const TextStyle(color: Colors.grey),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
-            onChanged: (text) async {
-              await getUser(phoneController.text).then((data) {
-                if (data != null) {
-                  setState(() => userExists = true);
-                } else {
-                  setState(() => userExists = false);
-                }
-              });
-            },
             validator: (value) {
-               if (value == null || value.length < 6) {
+              if (value == null || value.length < 6) {
                 return 'Password must be at least 6 characters';
-              }
-              else if (userExists) {
-                return 'User with this phone number already exists';
+              } else if (userExists) {
+                return null;
               }
               return null;
             },
           ),
-          const SizedBox(
-            height: 20,
-          ),
+          const SizedBox(height: 20),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              minimumSize: const Size.fromHeight(50),
+              backgroundColor: const Color(0xFF1E40AF),
+              foregroundColor: Colors.white,
+              padding: EdgeInsets.symmetric(horizontal: 30, vertical: 14),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
             onPressed: () {
               if (_formKey.currentState!.validate()) {
-                addUser(nameController.text, phoneController.text,passwordController.text);
+                addUser(nameController.text, phoneController.text,
+                    passwordController.text);
                 Navigator.pushReplacement(
                   context,
                   MaterialPageRoute(
@@ -145,32 +199,35 @@ class _RegistrationFormState extends State<RegistrationForm> {
               }
             },
             child: const Text(
-              'Register',
-              style: TextStyle(fontSize: 20),
+              '\tRegister\t',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
           ),
-          const SizedBox(
-            height: 20,
-          ),
-          RichText(
-            text: TextSpan(
-              style: defaultStyle,
-              text: 'Returning user? Login ',
-              children: <TextSpan>[
-                TextSpan(
-                  style: linkStyle,
-                  text: 'here',
-                  recognizer: TapGestureRecognizer()
-                    ..onTap = () {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const LoginPage(),
-                        ),
-                      );
-                    },
-                ),
-              ],
+          const SizedBox(height: 20),
+          Center(
+            child: RichText(
+              text: TextSpan(
+                style: const TextStyle(color: Colors.black87, fontSize: 14),
+                text: 'Returning user? Login ',
+                children: [
+                  TextSpan(
+                    text: 'here',
+                    style: const TextStyle(
+                      color: Color(0xFF1E40AF),
+                      fontWeight: FontWeight.bold,
+                    ),
+                    recognizer: TapGestureRecognizer()
+                      ..onTap = () {
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const LoginPage(),
+                          ),
+                        );
+                      },
+                  ),
+                ],
+              ),
             ),
           ),
         ],

@@ -72,3 +72,108 @@ Future incrementVotes(
     });
   }).then((value) => callback());
 }
+
+Stream<List<Map<String, dynamic>>> getLiveVotingData() {
+  return FirebaseFirestore.instance
+      .collection('votes')
+      .snapshots()
+      .map((snapshot) {
+    return snapshot.docs
+        .map((doc) => doc.data() as Map<String, dynamic>)
+        .toList();
+  });
+}
+
+Future<void> saveVotingPeriod(DateTime startTime, DateTime endTime) async {
+  try {
+    // Reference to the Firestore document
+    final DocumentReference votingPeriodDoc = FirebaseFirestore.instance
+        .collection('VotingSettings')
+        .doc('votingPeriod');
+
+    // Update or set the voting period
+    await votingPeriodDoc.set({
+      'startTime': startTime,
+      'endTime': endTime,
+    });
+
+    print('Voting period saved successfully!');
+  } catch (e) {
+    print('Error saving voting period: $e');
+    throw Exception('Failed to save voting period');
+  }
+}
+
+Future fetchUsers() async {
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+  try {
+    // Reference to the Users collection
+    CollectionReference usersRef = _firestore.collection('Users');
+
+    // Query users who have voted
+    QuerySnapshot votedSnapshot =
+        await usersRef.where('Voted', isEqualTo: true).get();
+
+    // Query users who have not voted
+    QuerySnapshot notVotedSnapshot =
+        await usersRef.where('Voted', isEqualTo: false).get();
+
+    // Extract details
+    List<Map<String, dynamic>> votedUsers = votedSnapshot.docs.map((doc) {
+      return {
+        'id': doc.id,
+        "REG_ID": doc['PhoneNumber'],
+        'FullName': doc['FullName'],
+        'voted': doc['Voted']
+      };
+    }).toList();
+
+    List<Map<String, dynamic>> notVotedUsers = notVotedSnapshot.docs.map((doc) {
+      return {
+        'id': doc.id,
+        "REG_ID": doc['PhoneNumber'],
+        'FullName': doc['FullName'],
+        'voted': doc['Voted']
+      };
+
+      return {'id': doc.id, 'FullName': doc['FullName'], 'voted': doc['Voted']};
+
+      return {'id': doc.id, 'name': doc['name'], 'voted': doc['voted']};
+    }).toList();
+
+    return {
+      'votedCount': votedUsers.length,
+      'notVotedCount': notVotedUsers.length,
+      'votedUsers': votedUsers,
+      'notVotedUsers': notVotedUsers,
+    };
+  } catch (e) {
+    print('Error fetching users: $e');
+    return {};
+  }
+}
+
+/// Fetches all staff details from the `staff` collection in Firestore.
+// Future<List<Map<String, dynamic>>> getStaffDetails() async {
+//   try {
+//     // Reference to the Firestore `staff` collection
+//     final collectionRef = FirebaseFirestore.instance.collection('staff');
+
+//     // Fetch documents from the collection
+//     final querySnapshot = await collectionRef.get();
+
+//     // Map the documents to a list of staff details
+//     final staffList = querySnapshot.docs.map((doc) {
+//       return {
+//         "id": doc.id, // Document ID
+//         ...doc.data() as Map<String, dynamic>, // Document fields
+//       };
+//     }).toList();
+
+//     return staffList;
+//   } catch (e) {
+//     print("Error fetching staff details: $e");
+//     throw Exception("Failed to fetch staff details.");
+//   }
+// }

@@ -4,7 +4,10 @@ import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 
 Future main() async {
+  print("object");
+
   WidgetsFlutterBinding.ensureInitialized();
+
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
@@ -16,11 +19,17 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    print("object");
     return MaterialApp(
       theme: ThemeData(
-        scaffoldBackgroundColor: Colors.blue[50],
-        colorScheme: ColorScheme.fromSwatch(
-          primarySwatch: Colors.blue,
+        primarySwatch: Colors.blue,
+        hintColor: Colors.blueAccent,
+        // Customize other theme settings here
+        textTheme: TextTheme(
+          bodyLarge: TextStyle(color: Colors.black),
+          bodyMedium: TextStyle(color: Colors.black87),
+          displayLarge:
+              TextStyle(color: Colors.blue, fontWeight: FontWeight.bold),
         ),
       ),
       debugShowCheckedModeBanner: false,

@@ -1,4 +1,5 @@
 import 'package:e_voting_app/home_page.dart';
+import 'package:e_voting_app/homepage.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 // For hashing (optional)
@@ -24,11 +25,11 @@ void signIn(BuildContext context, String phone, String password) async {
         context,
         MaterialPageRoute(
             builder: (context) =>
-                HomePage(phoneNumber: phone)), // Replace with your home page
+                HomePage(phonenumber: phone)), // Replace with your home page
       );
     } else {
       // Show error if no matching user found
-      _showErrorDialog(context, 'Invalid email or password.');
+      _showErrorDialog(context, 'Invalid Register or password.');
     }
   } catch (e) {
     _showErrorDialog(context, 'An error occurred: $e');
