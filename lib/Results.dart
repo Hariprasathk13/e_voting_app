@@ -1,5 +1,4 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:e_voting_app/adminpage.dart';
+import 'package:e_voting_app/firestore.dart';
 import 'package:flutter/material.dart';
 
 class VotingResultPage extends StatefulWidget {
@@ -8,76 +7,141 @@ class VotingResultPage extends StatefulWidget {
 }
 
 class _VotingResultPageState extends State<VotingResultPage> {
-  late Future<Map<String, dynamic>> votingResult;
-
+  late Future<List> pollResults;
+  late bool isshowresults;
   @override
   void initState() {
     super.initState();
-    votingResult = getVotingResults();
+    pollResults = calculateMaxVotes();
+    getShowResults().then((value) {
+      setState(() {
+        isshowresults = value!;
+      });
+    });
   }
 
-  Future<Map<String, dynamic>> getVotingResults() async {
-    try {
-      // Fetch votes from the 'votes' collection
-      final votesSnapshot =
-          await FirebaseFirestore.instance.collection('votes').get();
-
-      if (votesSnapshot.docs.isEmpty) {
-        throw Exception("No votes have been recorded yet.");
-      }
-
-      // Find the party with the highest votes
-      final partyVotes = votesSnapshot.docs.map((doc) {
-        return {
-          "partyName": doc.id,
-          "votes": doc['votes'] as int,
-        };
-      }).toList();
-
-      // partyVotes.sort((a, b) => b['votes'].compareTo(a['votes'])); // Sort descending by votes
-
-      final winner = partyVotes.isNotEmpty ? partyVotes.first : null;
-
-      return {
-        "winner": winner,
-        "votingClosed": false, // Always open
-      };
-    } catch (e) {
-      return {
-        "error": e.toString(),
-        "votingClosed": false,
-      };
-    }
-  }
-
+ 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Voting Live'),
-        backgroundColor: const Color(0xFF1E40AF),
-        elevation: 0,
-      ),
-      backgroundColor: const Color(0xFFF5F5F5),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Card(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            elevation: 6,
-            child: Padding(
-              padding: const EdgeInsets.all(24.0),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [Chart()],
-              ),
-            ),
-          ),
+        appBar: AppBar(
+          title: const Text('Voting Live'),
+          backgroundColor: const Color(0xFF1E40AF),
+          elevation: 0,
         ),
-      ),
-    );
+        backgroundColor: const Color(0xFFF5F5F5),
+        body: Center(
+          child: isshowresults
+              ? Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: FutureBuilder(
+                    future: calculateMaxVotes(),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting)
+                        Center(
+                          child: CircularProgressIndicator(),
+                        );
+                      if (snapshot.hasData) {
+                        final pollresults = snapshot.data;
+                        print(pollresults);
+                        return ListView(
+                          children: pollresults!.map((winner) {
+                            print(winner);
+                            final position = winner['position'];
+
+                            final candidate = winner['winner'];
+                            final votes = winner['votes'];
+
+                            return Card(
+                              elevation: 4,
+                              margin: const EdgeInsets.symmetric(vertical: 10),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              color: Colors.blue[50],
+                              child: Padding(
+                                padding: const EdgeInsets.all(16.0),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      position.toString(),
+                                      style: TextStyle(
+                                        fontSize: 24,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.green[700],
+                                      ),
+                                    ),
+                                    const SizedBox(height: 10),
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Expanded(
+                                          child: Text(
+                                            'Winner: $candidate',
+                                            style: const TextStyle(
+                                              overflow: TextOverflow.clip,
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.w500,
+                                              color: Colors.black,
+                                            ),
+                                          ),
+                                        ),
+                                        Text(
+                                          '$votes votes',
+                                          style: TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.w500,
+                                            color: Colors.black54,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                        );
+                      }
+                      return Text("");
+                    },
+                  ))
+              : Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Card(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    elevation: 6,
+                    color: Colors.red[100], // Light red background for error
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.error_outline,
+                            color: Colors.red, // Red icon for error
+                            size: 30,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              "No Poll has started yet Now !",
+                              style: TextStyle(
+                                color: Colors.red[800], // Dark red text color
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+        ));
   }
 }

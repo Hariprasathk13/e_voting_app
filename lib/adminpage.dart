@@ -11,8 +11,22 @@ class AdminPage extends StatefulWidget {
 }
 
 class _AdminPageState extends State<AdminPage> {
-  TimeOfDay? _startTime;
-  TimeOfDay? _endTime;
+  late bool isPollStarted;
+  late bool isshowresults;
+  @override
+  void initState() {
+    super.initState();
+    getIsPoll().then((status) {
+      setState(() {
+        isPollStarted = status as bool;
+      });
+    });
+    getShowResults().then((status) {
+      setState(() {
+        isshowresults = status as bool;
+      });
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -40,18 +54,61 @@ class _AdminPageState extends State<AdminPage> {
 
           return Padding(
             padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Live Voting Data',
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 16),
-                const Chart(), // Replace with your Chart widget implementation
-                const SizedBox(height: 24),
-                Expanded(
-                  child: GridView.count(
+            child: SingleChildScrollView(
+              child: Column(
+                children: [
+                  ElevatedButton(
+                    onPressed: () async {
+                      updateIsPoll(!isPollStarted);
+                      getIsPoll().then((value) {
+                        setState(() {
+                          print(value);
+                          isPollStarted = value!;
+                        });
+                      });
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: isPollStarted
+                          ? Colors.red
+                          : Colors
+                              .green, // Green when started, red when stopped
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 16, horizontal: 32),
+                      textStyle:
+                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                    child: Text(isPollStarted ? 'Stop Poll' : 'Start Poll'),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Stylish "Display Results" button, only enabled when the poll is started
+                  TextButton(
+                    onPressed: () {
+                      getShowResults().then((value) {
+                        setState(() {
+                          updateShowResults(!value!);
+                          isshowresults = !value;
+                        });
+                      });
+                    },
+                    style: TextButton.styleFrom(
+                      foregroundColor:
+                          isshowresults ? Colors.blue : Colors.grey,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 16, horizontal: 32),
+                      textStyle:
+                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                    child: Text('Display Results'),
+                  ),
+                  GridView.count(
+                    shrinkWrap: true,
                     crossAxisCount: 2,
                     crossAxisSpacing: 16,
                     mainAxisSpacing: 16,
@@ -84,8 +141,15 @@ class _AdminPageState extends State<AdminPage> {
                       ),
                     ],
                   ),
-                ),
-              ],
+                  const Text(
+                    'Live Voting Data',
+                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 16),
+                  Chart(), // Replace with your Chart widget implementation
+                  const SizedBox(height: 24),
+                ],
+              ),
             ),
           );
         },
@@ -146,8 +210,6 @@ class Chart extends StatefulWidget {
 }
 
 class _ChartState extends State<Chart> {
-  int touchedIndex = -1;
-
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<List<Map<String, dynamic>>>(
@@ -161,20 +223,43 @@ class _ChartState extends State<Chart> {
         }
 
         final List<Map<String, dynamic>> parties = snapshot.data!;
-        final List<int> votes =
-            parties.map((party) => party['Votes'] as int).toList();
-        final int totalVotes =
-            votes.isNotEmpty ? votes.reduce((a, b) => a + b) : 0;
-        final List<double> votesPercent = totalVotes > 0
-            ? votes.map((e) => (e / totalVotes) * 100).toList()
-            : List.filled(votes.length, 0.0);
-        final List<Color> sectionColors = [
-          const Color(0xff0293ee),
-          const Color(0xfff8b250),
-          const Color(0xff845bef),
-          const Color(0xff13d38e),
-          const Color(0xfff5387a),
-        ];
+
+        // Step 1: Count votes per position for each party
+        Map<String, Map<String, int>> positionVotes =
+            {}; // { "Coordinator": { "Party A": 3, "Party B": 2 }, ... }
+        for (var party in parties) {
+          final partyName = party['Name'];
+          final votedPositions = party['votedpositions'];
+
+          Map<String, int> voteCount = {}; // Count occurrences of each position
+          for (String position in votedPositions) {
+            voteCount[position] = (voteCount[position] ?? 0) + 1;
+          }
+
+          // Add this party's vote counts to the overall positionVotes map
+          voteCount.forEach((position, votesCount) {
+            if (!positionVotes.containsKey(position)) {
+              positionVotes[position] = {};
+            }
+            positionVotes[position]![partyName] = votesCount;
+          });
+        }
+
+        // Step 2: Prepare the top two parties for each position
+        Map<String, List<Map<String, dynamic>>> topPartiesForPositions = {};
+
+        positionVotes.forEach((position, partyVotes) {
+          // Sort by votes and get top two parties
+          var sortedParties = partyVotes.entries.toList()
+            ..sort((a, b) => b.value
+                .compareTo(a.value)); // Sort in descending order by votes
+          topPartiesForPositions[position] = sortedParties.take(2).map((entry) {
+            return {
+              'party': entry.key,
+              'votes': entry.value,
+            };
+          }).toList();
+        });
 
         return Card(
           elevation: 0,
@@ -186,86 +271,107 @@ class _ChartState extends State<Chart> {
             child: Column(
               children: [
                 Text(
-                  'Votes',
+                  'Votes by Position',
                   style: TextStyle(
                     fontSize: 30,
                     color: Theme.of(context).primaryColor,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                AspectRatio(
-                  aspectRatio: 1,
-                  child: PieChart(
-                    PieChartData(
-                      pieTouchData: PieTouchData(
-                        touchCallback: (FlTouchEvent event, pieTouchResponse) {
-                          setState(() {
-                            if (!event.isInterestedForInteractions ||
-                                pieTouchResponse == null ||
-                                pieTouchResponse.touchedSection == null) {
-                              touchedIndex = -1;
-                              return;
-                            }
-                            touchedIndex = pieTouchResponse
-                                .touchedSection!.touchedSectionIndex;
-                          });
-                        },
-                      ),
-                      borderData: FlBorderData(show: false),
-                      sectionsSpace: 0,
-                      centerSpaceRadius: 80,
-                      sections:
-                          showingSections(votes, votesPercent, sectionColors),
+                const SizedBox(height: 20),
+                // Step 3: Render BarChart for each position
+                ...topPartiesForPositions.entries.map((entry) {
+                  final position = entry.key;
+                  final topParties = entry.value;
+
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          position,
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: Theme.of(context).primaryColor,
+                          ),
+                        ),
+                        SizedBox(
+                          height: 200, // Bar chart height
+                          child: BarChart(
+                            BarChartData(
+                              gridData: FlGridData(show: false),
+                              borderData: FlBorderData(show: false),
+                              barGroups: topParties.map((partyData) {
+                                return BarChartGroupData(
+                                  x: topParties.indexOf(partyData),
+                                  barRods: [
+                                    BarChartRodData(
+                                      toY:
+                                          partyData['votes']?.toDouble() ?? 0.0,
+                                      color: topParties.indexOf(partyData) == 0
+                                          ? Colors.blue
+                                          : Colors
+                                              .orange, // Different color for 1st and 2nd positions
+                                      width: 20,
+                                      borderRadius:
+                                          BorderRadius.all(Radius.circular(10)),
+                                    ),
+                                  ],
+                                );
+                              }).toList(),
+                              titlesData: FlTitlesData(show: false),
+                            ),
+                          ),
+                        ),
+                        // Step 4: Display Party Names and Votes
+                        Column(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: topParties.map((partyData) {
+                            return Row(
+                              children: [
+                                Row(
+                                  children: [
+                                    CircleAvatar(
+                                      maxRadius: 10,
+                                      backgroundColor:
+                                          topParties.indexOf(partyData) == 0
+                                              ? Colors.blue
+                                              : Colors.orange,
+                                    ),
+                                    Text(
+                                      "\t " + partyData['party'],
+                                      style: TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.bold,
+                                        color: Theme.of(context).primaryColor,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ],
+                                ),
+                                Text(
+                                  "\t " + '${partyData['votes']} votes',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.black54,
+                                  ),
+                                ),
+                              ],
+                            );
+                          }).toList(),
+                        ),
+                      ],
                     ),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: parties.asMap().entries.map((entry) {
-                    final index = entry.key;
-                    final party = entry.value;
-                    return Indicator(
-                      color: sectionColors[index % sectionColors.length],
-                      text: party['Name'],
-                      isSquare: true,
-                    );
-                  }).toList(),
-                ),
+                  );
+                }).toList(),
               ],
             ),
           ),
         );
       },
     );
-  }
-
-  List<PieChartSectionData> showingSections(
-    List<int> votes,
-    List<double> votesPercent,
-    List<Color> sectionColors,
-  ) {
-    if (votes.isEmpty) {
-      return [];
-    }
-    return List.generate(votes.length, (index) {
-      final isTouched = index == touchedIndex;
-      final double radius = isTouched ? 60.0 : 50.0;
-
-      return PieChartSectionData(
-        color: sectionColors[index % sectionColors.length],
-        value: votesPercent[index],
-        title: votesPercent[index] > 0
-            ? '${votesPercent[index].toStringAsFixed(1)}%'
-            : '',
-        radius: radius,
-        titleStyle: const TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.bold,
-          color: Colors.white,
-        ),
-      );
-    });
   }
 }
 

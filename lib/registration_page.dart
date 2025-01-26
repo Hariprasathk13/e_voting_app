@@ -45,7 +45,7 @@ class RegistrationPage extends StatelessWidget {
                   ],
                 ),
                 Image.asset(
-                  "lib/images/logo2.jpg",
+                  "lib/images/logo2.png",
                   width: 60,
                   height: 60,
                 ),
@@ -96,6 +96,9 @@ class _RegistrationFormState extends State<RegistrationForm> {
   TextEditingController passwordController = TextEditingController();
 
   bool userExists = false;
+  final RegExp regExp = RegExp(
+    r'^(2023BC([01-9]|[1-3][0-9]|45))|(2024BC([01-9]|[1-3][0-9]|45))|(2022BC([01-9]|[1-3][0-9]|45))$',
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -145,8 +148,9 @@ class _RegistrationFormState extends State<RegistrationForm> {
             validator: (value) {
               if (value == null ||
                   value.length < 8 ||
-                  !value.contains("2022") ||
-                  !value.contains("BCA")) {
+                  !value.contains("20") ||
+                  !value.contains("BC") ||
+                  !regExp.hasMatch(value)) {
                 return 'Please enter a valid register number';
               } else if (userExists) {
                 return 'User with this register number already exists';

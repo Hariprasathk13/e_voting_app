@@ -15,12 +15,6 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  void votedCallback() {
-    setState(() {
-      // Refresh UI when voting status updates
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -66,9 +60,9 @@ class _HomePageState extends State<HomePage> {
                             MaterialPageRoute(
                                 builder: (context) => PartyScreen(
                                       phoneNumber: widget.phonenumber,
-                                      callback: incrementVotes,
-                                      votedCallback: votedCallback,
-                                      voted: snapshot.data['Voted'],
+                                    
+                                      VotedPositions:
+                                          snapshot.data['VotedPositions'],
                                     )),
                           );
                         },

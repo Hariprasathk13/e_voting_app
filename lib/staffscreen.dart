@@ -1,11 +1,10 @@
-import 'package:e_voting_app/firestore.dart';
 import 'package:flutter/material.dart';
 
 class StaffScreen extends StatelessWidget {
   StaffScreen({super.key});
 
   Future getStaffDetails() async {
-    await Future.delayed(Duration(seconds: 3));
+    await Future.delayed(Duration(seconds: 2));
     return [
       {
         "name": "Mrs. S .Selvarani",
@@ -24,6 +23,12 @@ class StaffScreen extends StatelessWidget {
         "job": "Assistant Proffesor",
         "education": "MCA., M.Phil., NET.",
         "img": "lib/images/staff3.jpg"
+      },
+      {
+        "name": "Mrs. K.P. Maheshwari",
+        "job": "Assistant Proffesor",
+        "education": "MCA,M.Phil.,NET,(Ph.D.)",
+        "img": "lib/images/staff5.jpg"
       },
       {
         "name": "Mrs. S. Nirmala Devi",

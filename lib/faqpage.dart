@@ -15,25 +15,47 @@ class FAQPage extends StatelessWidget {
         child: ListView(
           children: [
             _buildFAQTile(
-              question: '1. Who can vote in this election?',
+              question: '1. Who can use the app?',
+              answer: 'The app is exclusively for students, faculty, and administrators of the department.',
+            ),
+
+            _buildFAQTile(
+              question: '2. Who can vote in this election?',
               answer: 'Only registered students of the college can vote.',
             ),
             _buildFAQTile(
-              question: '2. How do I vote?',
+              question: '3. How do I vote?',
               answer:
                   'Login with your student ID, select a party, and cast your vote.',
             ),
             _buildFAQTile(
-              question: '3. Can I change my vote?',
+              question: '4. Is my vote anonymous?',
+              answer:
+                  'Yes, your vote is completely confidential and secure.',
+            ),
+            _buildFAQTile(
+              question: '5. Can I vote more than once?',
+              answer:
+                  'No, the app ensures one vote per user for each election.',
+            ),
+
+
+           _buildFAQTile(
+              question: '6. Can I change my vote?',
               answer: 'No, once you have voted, you cannot change your vote.',
             ),
             _buildFAQTile(
-              question: '4. When does the voting start and end?',
+              question: '7. When does the voting start and end?',
               answer:
                   'Voting starts on the specified date and ends at midnight.',
             ),
             _buildFAQTile(
-              question: '5. How can I check the results?',
+              question: '8. What if I miss the voting deadline?',
+              answer:
+                  'Unfortunately, you cannot vote after the deadline. Make sure to check the election schedule.',
+            ),
+            _buildFAQTile(
+              question: '9. How can I check the results?',
               answer:
                   'You can view the results after the voting period ends in the Results section.',
             ),

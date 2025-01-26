@@ -1,18 +1,20 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:e_voting_app/firestore.dart';
 import 'package:flutter/material.dart';
 
 class Candidatelist extends StatefulWidget {
-  final Function(String partyName, String phoneNumber, Function callback)
-      callback;
-  final Function votedCallback;
+  final String position;
   final String phoneNumber; // User's phone number to track voting.
-  final bool voted;
-  const Candidatelist(
-      {super.key,
-      required this.callback,
-      required this.votedCallback,
-      required this.phoneNumber,
-      required this.voted});
+  final bool voted; // Initial voted status
+  final Function callback;
+
+  const Candidatelist({
+    super.key,
+    required this.phoneNumber,
+    required this.voted,
+    required this.position,
+    required this.callback,
+  });
 
   @override
   State<Candidatelist> createState() => _CandidatelistState();
@@ -26,11 +28,21 @@ class _CandidatelistState extends State<Candidatelist> {
     'lib/images/staff4.jpg',
     'lib/images/staff5.jpg',
   ];
+
+  bool? votedStatus;
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize the voted status when the widget is first created
+    votedStatus = widget.voted;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Parties'),
+        title: const Text('Candidates'),
         backgroundColor: const Color(0xFF1E40AF),
         elevation: 0,
       ),
@@ -50,6 +62,7 @@ class _CandidatelistState extends State<Candidatelist> {
             final parties = snapshot.data!.docs;
 
             return ListView.builder(
+              shrinkWrap: true,
               itemCount: parties.length,
               itemBuilder: (context, index) {
                 final party = parties[index];
@@ -58,8 +71,9 @@ class _CandidatelistState extends State<Candidatelist> {
                   context: context,
                   partyName: party['Name'],
                   phoneNumber: widget.phoneNumber,
-                  voted: widget.voted,
-                  imgurl: imgurl
+                  voted:
+                      votedStatus ?? widget.voted, // Use votedStatus from state
+                  imgurl: imgurl,
                 );
               },
             );
@@ -74,7 +88,7 @@ class _CandidatelistState extends State<Candidatelist> {
     required String partyName,
     required String phoneNumber,
     required bool voted,
-    required String imgurl
+    required String imgurl,
   }) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
@@ -86,7 +100,7 @@ class _CandidatelistState extends State<Candidatelist> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-                Image.asset(
+              Image.asset(
                 imgurl,
                 width: 100,
                 height: 100,
@@ -139,10 +153,7 @@ class _CandidatelistState extends State<Candidatelist> {
   }
 
   void _showVoteConfirmationDialog(
-    BuildContext context,
-    String partyName,
-    String phoneNumber,
-  ) {
+      BuildContext context, String partyName, String phoneNumber) {
     showDialog(
       context: context,
       builder: (context) {
@@ -158,11 +169,19 @@ class _CandidatelistState extends State<Candidatelist> {
                 child: const Text('Cancel'),
               ),
               ElevatedButton(
-                onPressed: () {
-                  Navigator.pop(context); // Close the dialog
+                onPressed: () async {
+                  // Call the function to increment votes
+                  await incrementVotes(partyName, widget.position, phoneNumber);
 
-                  widget.callback(partyName, phoneNumber, widget.votedCallback);
-                  setState() {}
+                  // Update the voted status to true locally
+                  setState(() {
+                    votedStatus = true; // Mark the user as voted
+                  });
+
+                  // Notify the parent widget about the vote
+                  widget.callback();
+
+                  Navigator.pop(context); // Close the dialog
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF1E40AF),

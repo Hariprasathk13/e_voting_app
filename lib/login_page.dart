@@ -45,7 +45,7 @@ class LoginPage extends StatelessWidget {
                   ],
                 ),
                 Image.asset(
-                  "lib/images/logo2.jpg",
+                  "lib/images/logo2.png",
                   width: 60,
                   height: 60,
                 ),
@@ -92,6 +92,9 @@ class _LoginFormState extends State<LoginForm> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
+  final RegExp regExp = RegExp(
+    r'^(2023BC([01-9]|[1-3][0-9]|45))|(2024BC([01-9]|[1-3][0-9]|45))|(2022BC([01-9]|[1-3][0-9]|45))$',
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -115,8 +118,9 @@ class _LoginFormState extends State<LoginForm> {
               if (value.toString() == 'ADMIN') return null;
               if (value == null ||
                   value.length < 8 ||
-                  !value.contains("2022") ||
-                  !value.contains("BCA")) {
+                  !value.contains("20") ||
+                  !value.contains("BC") ||
+                  !regExp.hasMatch(value)) {
                 return 'Please enter a valid register number';
               }
               return null;

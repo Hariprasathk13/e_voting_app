@@ -6,7 +6,7 @@ Future addUser(name, phoneNumber, password) async {
     'FullName': name,
     'PhoneNumber': phoneNumber,
     'password': password,
-    'Voted': false
+    "VotedPositions": []
   });
 }
 
@@ -41,9 +41,11 @@ Future<List<Map<String, dynamic>>> getParties() async {
   }
 }
 
-Future incrementVotes(
-    String partyName, String phoneNumber, Function callback) async {
+Future<void> incrementVotes(
+    String partyName, String position, String phoneNumber) async {
   final db = FirebaseFirestore.instance;
+
+  // Get the party document reference based on the party name
   final partyDocRef = await db
       .collection('Parties')
       .where('Name', isEqualTo: partyName)
@@ -52,6 +54,8 @@ Future incrementVotes(
       .then((QuerySnapshot snapshot) {
     return snapshot.docs[0].reference;
   });
+
+  // Get the user document reference based on the phone number
   final userDocRef = await db
       .collection('Users')
       .where('PhoneNumber', isEqualTo: phoneNumber)
@@ -62,86 +66,56 @@ Future incrementVotes(
   });
 
   await db.runTransaction((transaction) async {
+    // Append the position to the party's votedpositions array
     transaction.update(partyDocRef, {
-      // Pass the DocumentReference here ^^
-      "Votes": FieldValue.increment(1),
+      "votedpositions": FieldValue.arrayUnion([position]),
     });
-    transaction.update(userDocRef, {
-      // Pass the DocumentReference here ^^
-      "Voted": true,
-    });
-  }).then((value) => callback());
-}
 
-Stream<List<Map<String, dynamic>>> getLiveVotingData() {
-  return FirebaseFirestore.instance
-      .collection('votes')
-      .snapshots()
-      .map((snapshot) {
-    return snapshot.docs
-        .map((doc) => doc.data() as Map<String, dynamic>)
-        .toList();
+    // Record the user's vote in their document
+    transaction.update(userDocRef, {
+      "VotedPositions": FieldValue.arrayUnion([position]),
+    });
   });
 }
 
-Future<void> saveVotingPeriod(DateTime startTime, DateTime endTime) async {
-  try {
-    // Reference to the Firestore document
-    final DocumentReference votingPeriodDoc = FirebaseFirestore.instance
-        .collection('VotingSettings')
-        .doc('votingPeriod');
-
-    // Update or set the voting period
-    await votingPeriodDoc.set({
-      'startTime': startTime,
-      'endTime': endTime,
-    });
-
-    print('Voting period saved successfully!');
-  } catch (e) {
-    print('Error saving voting period: $e');
-    throw Exception('Failed to save voting period');
-  }
-}
-
-Future fetchUsers() async {
+Future<Map<String, dynamic>> fetchUsers() async {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   try {
     // Reference to the Users collection
     CollectionReference usersRef = _firestore.collection('Users');
 
-    // Query users who have voted
-    QuerySnapshot votedSnapshot =
-        await usersRef.where('Voted', isEqualTo: true).get();
+    // Fetch all users
+    QuerySnapshot usersSnapshot = await usersRef.get();
 
-    // Query users who have not voted
-    QuerySnapshot notVotedSnapshot =
-        await usersRef.where('Voted', isEqualTo: false).get();
+    // Separate users into voted and not voted based on VotedPositions array
+    List<Map<String, dynamic>> votedUsers = [];
+    List<Map<String, dynamic>> notVotedUsers = [];
 
-    // Extract details
-    List<Map<String, dynamic>> votedUsers = votedSnapshot.docs.map((doc) {
-      return {
-        'id': doc.id,
-        "REG_ID": doc['PhoneNumber'],
-        'FullName': doc['FullName'],
-        'voted': doc['Voted']
-      };
-    }).toList();
+    for (var doc in usersSnapshot.docs) {
+      final data = doc.data() as Map<String, dynamic>;
+      final List<dynamic> votedPositions = data['VotedPositions'] ?? [];
 
-    List<Map<String, dynamic>> notVotedUsers = notVotedSnapshot.docs.map((doc) {
-      return {
-        'id': doc.id,
-        "REG_ID": doc['PhoneNumber'],
-        'FullName': doc['FullName'],
-        'voted': doc['Voted']
-      };
+      if (votedPositions.isNotEmpty) {
+        // User has voted
+        votedUsers.add({
+          'id': doc.id,
+          "REG_ID": data['PhoneNumber'],
+          'FullName': data['FullName'],
+          'votedPositions': votedPositions,
+        });
+      } else {
+        // User has not voted
+        notVotedUsers.add({
+          'id': doc.id,
+          "REG_ID": data['PhoneNumber'],
+          'FullName': data['FullName'],
+          'votedPositions': votedPositions,
+        });
+      }
+    }
 
-      return {'id': doc.id, 'FullName': doc['FullName'], 'voted': doc['Voted']};
-
-      return {'id': doc.id, 'name': doc['name'], 'voted': doc['voted']};
-    }).toList();
-
+    // Return counts and user lists
     return {
       'votedCount': votedUsers.length,
       'notVotedCount': notVotedUsers.length,
@@ -150,9 +124,146 @@ Future fetchUsers() async {
     };
   } catch (e) {
     print('Error fetching users: $e');
-    return {};
+    return {
+      'votedCount': 0,
+      'notVotedCount': 0,
+      'votedUsers': [],
+      'notVotedUsers': [],
+    };
   }
 }
+
+Future<List> calculateMaxVotes() async {
+  final db = FirebaseFirestore.instance;
+
+  try {
+    // Fetch all party documents
+    final partiesSnapshot = await db.collection('Parties').get();
+
+    // Map to store the max votes for each position
+    Map<String, Map<String, int>> positionVotes =
+        {}; // { "Coordinator": { "Party A": 3, "Party B": 2 }, ... }
+
+    for (var partyDoc in partiesSnapshot.docs) {
+      final partyData = partyDoc.data();
+      final String partyName = partyData['Name'];
+      final List<dynamic> votedPositions = partyData['votedpositions'];
+
+      // Count occurrences of each position for the current party
+      Map<String, int> voteCount = {};
+      for (String position in votedPositions) {
+        voteCount[position] = (voteCount[position] ?? 0) + 1;
+      }
+
+      // Add this party's vote count to the overall positionVotes map
+      for (var position in voteCount.keys) {
+        if (!positionVotes.containsKey(position)) {
+          positionVotes[position] = {};
+        }
+        positionVotes[position]![partyName] = voteCount[position]!;
+      }
+    }
+
+    // Determine the party with the max votes for each position
+
+    // { "Coordinator": "Party A", "Principal": "Party B" }
+    int maxVotes = 0;
+    List winners = [];
+    for (var position in positionVotes.keys) {
+      String maxParty = "";
+      maxVotes = 0;
+
+      positionVotes[position]!.forEach((party, votes) {
+        if (votes > maxVotes) {
+          maxVotes = votes;
+          maxParty = party;
+        }
+      });
+      Map<String, String> maxVotesPerPosition = {};
+      maxVotesPerPosition['position'] = position;
+      maxVotesPerPosition['winner'] = maxParty;
+      maxVotesPerPosition['votes'] = maxVotes.toString();
+      winners.add(maxVotesPerPosition);
+    }
+
+    // Print the results
+    // maxVotesPerPosition.forEach((
+    //   position,
+    //   party,
+    // ) {
+    //   // print("Position: $position, winner: $party,votes: $maxVotes");
+    // });
+    return winners;
+  } catch (e) {
+    print("Error: $e");
+  }
+  return [];
+}
+
+Future<bool?> getIsPoll() async {
+  final db = FirebaseFirestore.instance;
+
+  try {
+    // Fetch the `ispoll` value from the settings document
+    final doc = await db.collection('Settings').doc('setting').get();
+    if (doc.exists) {
+      return doc.data()?['ispoll']; // Return the ispoll value
+    } else {
+      print("Settings document does not exist.");
+      return null;
+    }
+  } catch (e) {
+    print("Error fetching ispoll: $e");
+    return null;
+  }
+}
+
+Future<void> updateIsPoll(bool ispoll) async {
+  final db = FirebaseFirestore.instance;
+
+  try {
+    // Update the `ispoll` value in the settings document
+    await db.collection('Settings').doc('setting').update({
+      'ispoll': ispoll,
+    });
+    print("ispoll updated successfully.");
+  } catch (e) {
+    print("Error updating ispoll: $e");
+  }
+}
+
+Future<bool?> getShowResults() async {
+  final db = FirebaseFirestore.instance;
+
+  try {
+    // Fetch the `showresults` value from the settings document
+    final doc = await db.collection('Settings').doc('setting').get();
+    if (doc.exists) {
+      return doc.data()?['showresults']; // Return the showresults value
+    } else {
+      print("Settings document does not exist.");
+      return null;
+    }
+  } catch (e) {
+    print("Error fetching showresults: $e");
+    return null;
+  }
+}
+
+Future<void> updateShowResults(bool showresults) async {
+  final db = FirebaseFirestore.instance;
+
+  try {
+    // Update the `showresults` value in the settings document
+    await db.collection('Settings').doc('setting').update({
+      'showresults': showresults,
+    });
+    print("showresults updated successfully.");
+  } catch (e) {
+    print("Error updating showresults: $e");
+  }
+}
+
 
 /// Fetches all staff details from the `staff` collection in Firestore.
 // Future<List<Map<String, dynamic>>> getStaffDetails() async {

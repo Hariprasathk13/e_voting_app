@@ -1,52 +1,152 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:e_voting_app/candidatelist.dart';
 import 'package:e_voting_app/firestore.dart';
 import 'package:flutter/material.dart';
 
-class PartyScreen extends StatelessWidget {
-  final Function(String partyName, String phoneNumber, Function callback)
-      callback;
-  final Function votedCallback;
+class PartyScreen extends StatefulWidget {
   final String phoneNumber; // User's phone number to track voting.
-  final bool voted;
+  final List VotedPositions;
+
   const PartyScreen({
     super.key,
-    // required this.callback,
-    // required this.votedCallback,
     required this.phoneNumber,
-    required this.callback,
-    required this.votedCallback,
-    required this.voted,
-    // required this.voted, required String position
+    required this.VotedPositions,
   });
+
+  @override
+  State<PartyScreen> createState() => _PartyScreenState();
+}
+
+class _PartyScreenState extends State<PartyScreen> {
+  bool iscanvotenow = false;
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    getIsPoll().then((value) {
+      print(value);
+      setState(() {
+        iscanvotenow = value!;
+      });
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Parties'),
+        title: const Text('Positions'),
         backgroundColor: const Color(0xFF1E40AF),
         elevation: 0,
       ),
       backgroundColor: const Color(0xFFF5F5F5),
       body: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            children: [
-              // _buildPartyCard(context: context, partyName: "President", phoneNumber: , voted: voted)
-              _buildPartyCard(context: context, Position: "President"),
-              _buildPartyCard(context: context, Position: "Vice President"),
-              _buildPartyCard(context: context, Position: "Treasurer"),
-              _buildPartyCard(context: context, Position: "Coordinator"),
-            ],
-          )),
+        padding: const EdgeInsets.all(16),
+        child: iscanvotenow
+            ? SingleChildScrollView(
+                child: Column(
+                  children: [
+                    PartyCard(
+                      phoneNumber: widget.phoneNumber,
+                      VotedPositions: widget.VotedPositions,
+                      position: "President",
+                    ),
+                    PartyCard(
+                        phoneNumber: widget.phoneNumber,
+                        VotedPositions: widget.VotedPositions,
+                        position: "Vice President"),
+                    PartyCard(
+                        phoneNumber: widget.phoneNumber,
+                        VotedPositions: widget.VotedPositions,
+                        position: "Treasurer"),
+                    PartyCard(
+                        phoneNumber: widget.phoneNumber,
+                        VotedPositions: widget.VotedPositions,
+                        position: "Coordinator"),
+                    PartyCard(
+                        phoneNumber: widget.phoneNumber,
+                        VotedPositions: widget.VotedPositions,
+                        position: "Secretary"),
+                    PartyCard(
+                        phoneNumber: widget.phoneNumber,
+                        VotedPositions: widget.VotedPositions,
+                        position: "Join Secretary"),
+                  ],
+                ),
+              )
+            : Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Card(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  elevation: 6,
+                  color: Colors.red[100], // Light red background for error
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.error_outline,
+                          color: Colors.red, // Red icon for error
+                          size: 30,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            "No Poll has started yet Now !",
+                            style: TextStyle(
+                              color: Colors.red[800], // Dark red text color
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+      ),
     );
   }
+}
 
-  Widget _buildPartyCard({
-    required BuildContext context,
-    required String Position,
-  }) {
+class PartyCard extends StatefulWidget {
+  final String position;
+  final String phoneNumber;
+  final List VotedPositions;
+
+  const PartyCard({
+    super.key,
+    required this.position,
+    required this.phoneNumber,
+    required this.VotedPositions,
+  });
+
+  @override
+  _PartyCardState createState() => _PartyCardState();
+}
+
+class _PartyCardState extends State<PartyCard> {
+  bool voted = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize voted status based on VotedPositions from the parent widget
+    voted = widget.VotedPositions.contains(widget.position);
+  }
+
+  void _rebuild() {
+    setState(() {
+      voted = true;
+    });
+    print(voted);
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Card(
@@ -58,7 +158,7 @@ class PartyScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                Position,
+                widget.position,
                 style: const TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
@@ -70,24 +170,22 @@ class PartyScreen extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   ElevatedButton(
-                    onPressed: () {
-                      // if (voted) {
-                      //   _showAlreadyVotedAlert(context);
-                      // } else {
-                      //   _showVoteConfirmationDialog(
-                      //     context,
-                      //     partyName,
-                      //     phoneNumber,
-                      //   );
-                      // }
-
-                      Navigator.of(context).push(MaterialPageRoute(
-                          builder: (context) => Candidatelist(
-                              callback: callback,
-                              votedCallback: votedCallback,
-                              phoneNumber: phoneNumber,
-                              voted: voted)));
-                    },
+                    onPressed: voted
+                        ? null
+                        : () {
+                            // Navigate to the Candidatelist page and pass the callback to rebuild
+                            Navigator.of(context).push(MaterialPageRoute(
+                              builder: (context) => Candidatelist(
+                                callback: () {
+                                  print("Vote confirmed");
+                                  _rebuild(); // Call rebuild when the user confirms the vote
+                                },
+                                position: widget.position,
+                                phoneNumber: widget.phoneNumber,
+                                voted: voted,
+                              ),
+                            ));
+                          },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF1E40AF),
                       foregroundColor: Colors.white,
@@ -95,7 +193,7 @@ class PartyScreen extends StatelessWidget {
                         borderRadius: BorderRadius.circular(8),
                       ),
                     ),
-                    child: Text('Vote Now'),
+                    child: Text(voted ? "Already Voted" : "Vote Now"),
                   ),
                 ],
               ),
@@ -103,61 +201,6 @@ class PartyScreen extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
-
-  void _showVoteConfirmationDialog(
-    BuildContext context,
-    String partyName,
-    String phoneNumber,
-  ) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Confirm Vote'),
-          content: Text('Are you sure you want to vote for $partyName?'),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context); // Close the dialog
-              },
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context); // Close the dialog
-                // callback(partyName, phoneNumber,);
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF1E40AF),
-                foregroundColor: Colors.white,
-              ),
-              child: const Text('Confirm'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  void _showAlreadyVotedAlert(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Already Voted'),
-          content: const Text('You have already voted for this party.'),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context); // Close the alert box
-              },
-              child: const Text('OK'),
-            ),
-          ],
-        );
-      },
     );
   }
 }
