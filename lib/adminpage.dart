@@ -145,8 +145,49 @@ class _AdminPageState extends State<AdminPage> {
                     'Live Voting Data',
                     style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                   ),
+
                   const SizedBox(height: 16),
-                  Chart(), // Replace with your Chart widget implementation
+                  if (votedUsers.length > 0) ...[
+                    Chart()
+                  ], // Replace with your Chart widget implementation
+                  if (votedUsers.length == 0)
+                    Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Card(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        elevation: 6,
+                        color:
+                            Colors.red[100], // Light red background for error
+                        child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.error_outline,
+                                color: Colors.red, // Red icon for error
+                                size: 30,
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  "No Vote right now !\n ask your students to vote soon !",
+                                  style: TextStyle(
+                                    color:
+                                        Colors.red[800], // Dark red text color
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+
                   const SizedBox(height: 24),
                 ],
               ),

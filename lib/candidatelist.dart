@@ -157,40 +157,38 @@ class _CandidatelistState extends State<Candidatelist> {
     showDialog(
       context: context,
       builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setState) => AlertDialog(
-            title: const Text('Confirm Vote'),
-            content: Text('Are you sure you want to vote for $partyName?'),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(context); // Close the dialog
-                },
-                child: const Text('Cancel'),
+        return AlertDialog(
+          title: const Text('Confirm Vote'),
+          content: Text('Are you sure you want to vote for $partyName?'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context); // Close the dialog
+              },
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                // Call the function to increment votes
+                await incrementVotes(partyName, widget.position, phoneNumber);
+
+                Navigator.pop(context); // Close the dialog
+
+                // ✅ Update the UI of the main widget
+                setState(() {
+                  votedStatus = true;
+                });
+
+                // Notify the parent widget about the vote
+                widget.callback();
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF1E40AF),
+                foregroundColor: Colors.white,
               ),
-              ElevatedButton(
-                onPressed: () async {
-                  // Call the function to increment votes
-                  await incrementVotes(partyName, widget.position, phoneNumber);
-
-                  // Update the voted status to true locally
-                  setState(() {
-                    votedStatus = true; // Mark the user as voted
-                  });
-
-                  // Notify the parent widget about the vote
-                  widget.callback();
-
-                  Navigator.pop(context); // Close the dialog
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF1E40AF),
-                  foregroundColor: Colors.white,
-                ),
-                child: const Text('Confirm'),
-              ),
-            ],
-          ),
+              child: const Text('Confirm'),
+            ),
+          ],
         );
       },
     );

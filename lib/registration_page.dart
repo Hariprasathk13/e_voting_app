@@ -97,8 +97,8 @@ class _RegistrationFormState extends State<RegistrationForm> {
 
   bool userExists = false;
   final RegExp regExp = RegExp(
-    r'^(2023BC([01-9]|[1-3][0-9]|45))|(2024BC([01-9]|[1-3][0-9]|45))|(2022BC([01-9]|[1-3][0-9]|45))$',
-  );
+      // r'^(2023BC([01-9]|[1-3][0-9]|45))|(2024BC([01-9]|[1-3][0-9]|45))|(2022BC([01-9]|[1-3][0-9]|45))$',
+      r'^(2022BC0[1-9]|2022BC[1-3][0-9]|2022BC4[0-5]|2023BC0[0-9]|2023BC[1-3][0-9]|2023BC4[0-5]|2024BC0[0-9]|2024BC[1-3][0-9]|2024BC4[0-5])$');
 
   @override
   Widget build(BuildContext context) {

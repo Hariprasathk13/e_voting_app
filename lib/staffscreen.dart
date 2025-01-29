@@ -37,6 +37,7 @@ class StaffScreen extends StatelessWidget {
         "img": "lib/images/staff4.jpg"
       },
     ];
+ 
   }
 
   @override

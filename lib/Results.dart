@@ -20,7 +20,39 @@ class _VotingResultPageState extends State<VotingResultPage> {
     });
   }
 
- 
+  final List staffs = [
+    {
+      "name": "Mrs. S .Selvarani",
+      "job": "Head of Department",
+      "education": "M.C.A ,M.Phil,NET,SET",
+      "img": "lib/images/staff1.jpg"
+    },
+    {
+      "name": "Mrs.J.Arockia Jackuline Joni",
+      "job": "Assistant Proffesor",
+      "education": "MSC,M.Phil",
+      "img": "lib/images/staff2.jpg"
+    },
+    {
+      "name": "Ms. P. Renganayagi,",
+      "job": "Assistant Proffesor",
+      "education": "MCA., M.Phil., NET.",
+      "img": "lib/images/staff3.jpg"
+    },
+    {
+      "name": "Mrs. K.P. Maheshwari",
+      "job": "Assistant Proffesor",
+      "education": "MCA,M.Phil.,NET,(Ph.D.)",
+      "img": "lib/images/staff5.jpg"
+    },
+    {
+      "name": "Mrs. S. Nirmala Devi",
+      "job": "Assistant Proffesor",
+      "education": "M.Sc., M.Phil., NET, (Ph.D.)",
+      "img": "lib/images/staff4.jpg"
+    },
+  ];
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -43,6 +75,7 @@ class _VotingResultPageState extends State<VotingResultPage> {
                         );
                       if (snapshot.hasData) {
                         final pollresults = snapshot.data;
+
                         print(pollresults);
                         return ListView(
                           children: pollresults!.map((winner) {
@@ -51,7 +84,8 @@ class _VotingResultPageState extends State<VotingResultPage> {
 
                             final candidate = winner['winner'];
                             final votes = winner['votes'];
-
+                            final img = staffs.firstWhere((staff) =>
+                                staff['name'] == candidate.toString())['img'];
                             return Card(
                               elevation: 4,
                               margin: const EdgeInsets.symmetric(vertical: 10),
@@ -77,6 +111,11 @@ class _VotingResultPageState extends State<VotingResultPage> {
                                       mainAxisAlignment:
                                           MainAxisAlignment.spaceBetween,
                                       children: [
+                                        Image.asset(
+                                          img,
+                                          width: 120,
+                                          height: 120,
+                                        ),
                                         Expanded(
                                           child: Text(
                                             'Winner: $candidate',
@@ -86,14 +125,6 @@ class _VotingResultPageState extends State<VotingResultPage> {
                                               fontWeight: FontWeight.w500,
                                               color: Colors.black,
                                             ),
-                                          ),
-                                        ),
-                                        Text(
-                                          '$votes votes',
-                                          style: TextStyle(
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.w500,
-                                            color: Colors.black54,
                                           ),
                                         ),
                                       ],
@@ -142,6 +173,7 @@ class _VotingResultPageState extends State<VotingResultPage> {
                     ),
                   ),
                 ),
+      
         ));
   }
 }
